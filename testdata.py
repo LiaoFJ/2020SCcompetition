@@ -85,16 +85,19 @@ def User_extraction(test_user, col):
 
 #%%get test
 col = 'arpu_202004'
-
+print('reading data')
 test_app, test_sms, test_voc, test_user = Reading_test_data(path)
-
+print('app extraction')
 new_test_app = App_extraciton(test_app)
+print('voc extraction')
 new_test_voc = Voc_extraction(test_voc)
+print('user extraction')
 new_test_user = User_extraction(test_user, col)
-
+print('merge data')
 new_test = pd.merge(new_test_user, new_test_voc, how='left', on=['phone_no_m'])
 new_test = pd.merge(new_test, new_test_app, how='left', on=['phone_no_m'])
 
 #%%save
+print('save data')
 new_test.to_csv('new_test.csv')
 
