@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
-path1 = os.path.abspath('.')
+path = os.path.abspath('.')
 #%%
 def Reading_train_data(path):
     train_app = pd.read_csv(os.path.join(path, 'train', 'train_app.csv'), sep=',', engine='python')
@@ -85,15 +85,19 @@ def User_extraction(train_user, col):
 #%%get train
 col = 'arpu_202003'
 
+print('reading data')
 train_app, train_sms, train_voc, train_user = Reading_train_data(path)
-
+print('app extraction')
 new_train_app = App_extraciton(train_app)
+print('voc extraction')
 new_train_voc = Voc_extraction(train_voc)
+print('user extraction')
 new_train_user = User_extraction(train_user, col)
-
+print('merge data')
 new_train = pd.merge(new_train_user, new_train_voc, how='left', on=['phone_no_m'])
 new_train = pd.merge(new_train, new_train_app, how='left', on=['phone_no_m'])
 
 #%%save
+print('save data')
 new_train.to_csv('new_train.csv')
 
