@@ -7,10 +7,10 @@ path = os.path.abspath('.')
 
 #%%
 def Reading_test_data(path):
-    test_app = pd.read_csv(os.path.join(path, 'test', 'test_app.csv'), sep=',', engine='python', quotechar='"')
-    test_sms = pd.read_csv(os.path.join(path, 'test', 'test_sms.csv'), sep=',', engine='python', quotechar='"')
-    test_voc = pd.read_csv(os.path.join(path, 'test', 'test_voc.csv'), sep=',', engine='python', quotechar='"')
-    test_user = pd.read_csv(os.path.join(path, 'test', 'test_user.csv'), sep=',', engine='python', quotechar='"')
+    test_app = pd.read_csv(os.path.join(path, 'test', 'test_app.csv'), sep=',', engine='python')
+    test_sms = pd.read_csv(os.path.join(path, 'test', 'test_sms.csv'), sep=',', engine='python')
+    test_voc = pd.read_csv(os.path.join(path, 'test', 'test_voc.csv'), sep=',', engine='python')
+    test_user = pd.read_csv(os.path.join(path, 'test', 'test_user.csv'), sep=',', engine='python')
     return test_app, test_sms, test_voc, test_user
 #%%
 def Voc_extraction(test_voc):
