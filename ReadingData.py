@@ -44,7 +44,7 @@ def Voc_extraction(train_voc):
     col = 'call_dur'
     dict_avg = dict(train_voc.groupby(['phone_no_m']).mean()[col])
     new_train_voc['avg_call_dur'] = new_train_voc['phone_no_m'].map(dict_avg)
-    new_train_voc['num_of_call_high'] = new_train_voc['num_of_call'].apply(lambda x: 1 if x >= 50 else 0)
+    new_train_voc['num_of_call_sus_high'] = new_train_voc['num_of_sus'].apply(lambda x: 1 if x >= 50 else 0)
     return new_train_voc
 #%%
 def App_extraciton(train_app):
@@ -84,20 +84,19 @@ def User_extraction(train_user, col):
 
 #%%get train
 col = 'arpu_202003'
-
 print('reading data')
 train_app, train_sms, train_voc, train_user = Reading_train_data(path)
 print('app extraction')
 new_train_app = App_extraciton(train_app)
-print('voc extraction')
+print('v0c_extraction')
 new_train_voc = Voc_extraction(train_voc)
-print('user extraction')
+print('User_extracition')
 new_train_user = User_extraction(train_user, col)
-print('merge data')
+print('merge')
 new_train = pd.merge(new_train_user, new_train_voc, how='left', on=['phone_no_m'])
 new_train = pd.merge(new_train, new_train_app, how='left', on=['phone_no_m'])
 
 #%%save
-print('save data')
+print('save')
 new_train.to_csv('new_train.csv')
 
