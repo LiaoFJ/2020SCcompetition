@@ -44,7 +44,7 @@ def Voc_extraction(train_voc):
     col = 'call_dur'
     dict_avg = dict(train_voc.groupby(['phone_no_m']).mean()[col])
     new_train_voc['avg_call_dur'] = new_train_voc['phone_no_m'].map(dict_avg)
-    new_train_voc['num_of_call_sus_high'] = new_train_voc['num_of_sus'].apply(lambda x: 1 if x >= 50 else 0)
+    new_train_voc['num_of_call_sus_high'] = new_train_voc['num_of_sus'].apply(lambda x: 1 if x >= 357 else 0)
     return new_train_voc
 #%%
 def App_extraciton(train_app):
