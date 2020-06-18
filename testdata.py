@@ -120,10 +120,6 @@ def Sms_extraciton(test_sms):
                             'day_average_receive': total_receive / total_sms_day},
                            index=[i])
         train_sms3 = train_sms3.append(new, ignore_index=True)
-
-        i = i + 1
-        if i % 100 == 0:
-            print(i);
     return train_sms3
 
 
