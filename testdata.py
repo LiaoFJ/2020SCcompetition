@@ -139,6 +139,7 @@ new_test_sms = Sms_extraciton(test_sms)
 print('merge data')
 new_test = pd.merge(new_test_user, new_test_voc, how='left', on=['phone_no_m'])
 new_test = pd.merge(new_test, new_test_app, how='left', on=['phone_no_m'])
+new_test = pd.merge(new_test, new_test_sms, how='left', on=['phone_no_m'])
 
 #%%save
 print('save data')
