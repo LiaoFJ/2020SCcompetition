@@ -83,6 +83,50 @@ def User_extraction(test_user, col):
 
     return test_user
 
+
+def Sms_extraciton(test_sms):
+    test_sms2 = test_sms.groupby('phone_no_m')
+
+    test_sms3 = pd.DataFrame(
+        columns=['phone_no_m', 'total_receive', 'total_send', 'ratio(send/receive)', 'total_sms_month', 'total_sms_day',
+                 'month_average_send', 'day_average_send', 'month_average_receive', 'day_average_receive'])
+    i = 0
+    for phone_no_m, value in test_sms3:
+        type1 = value[value['calltype_id'] == 1]
+        type2 = value[value['calltype_id'] == 2]
+        # 两种短信方式的次数统计
+        total_receive = len(type1)
+        total_send = len(type2)
+        # 接收/发送
+        if (total_receive != 0) & (total_send != 0):
+            ratio = total_receive / total_send
+        else:
+            ratio = -1
+
+        # 有效发送短信总月数
+        total_sms_month = len(value['request_datetime'].apply(lambda x: x[:len('2020-03')]).unique())
+        # 有效发送短信总天数
+        total_sms_day = len(value['request_datetime'].apply(lambda x: x.split(' ')[0]).unique())
+
+        new = pd.DataFrame({'phone_no_m': phone_no_m,
+                            'total_receive': total_receive,
+                            'total_send': total_send,
+                            'ratio(send/receive)': ratio,
+                            'total_sms_month': total_sms_month,
+                            'total_sms_day': total_sms_day,
+                            'month_average_send': total_send / total_sms_month,
+                            'day_average_send': total_send / total_sms_day,
+                            'month_average_receive': total_receive / total_sms_month,
+                            'day_average_receive': total_receive / total_sms_day},
+                           index=[i])
+        train_sms3 = train_sms3.append(new, ignore_index=True)
+
+        i = i + 1
+        if i % 100 == 0:
+            print(i);
+    return train_sms3
+
+
 #%%get test
 col = 'arpu_202004'
 print('reading data')
@@ -93,6 +137,9 @@ print('voc extraction')
 new_test_voc = Voc_extraction(test_voc)
 print('user extraction')
 new_test_user = User_extraction(test_user, col)
+print('sms extraction')
+new_test_sms = Sms_extraciton(test_sms)
+
 print('merge data')
 new_test = pd.merge(new_test_user, new_test_voc, how='left', on=['phone_no_m'])
 new_test = pd.merge(new_test, new_test_app, how='left', on=['phone_no_m'])
