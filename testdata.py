@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
 path = os.path.abspath('.')
-
+#path = '/Users/mayspig/Desktop/竞赛/诈骗电话竞赛资料/诈骗电话号码识别-0527'
 #%%
 def Reading_test_data(path):
     test_app = pd.read_csv(os.path.join(path, 'test', 'test_app.csv'), sep=',', engine='python')
@@ -91,7 +91,7 @@ def Sms_extraciton(test_sms):
         columns=['phone_no_m', 'total_receive', 'total_send', 'ratio(send/receive)', 'total_sms_month', 'total_sms_day',
                  'month_average_send', 'day_average_send', 'month_average_receive', 'day_average_receive'])
     i = 0
-    for phone_no_m, value in test_sms3:
+    for phone_no_m, value in test_sms2:
         type1 = value[value['calltype_id'] == 1]
         type2 = value[value['calltype_id'] == 2]
         # 两种短信方式的次数统计
@@ -119,8 +119,8 @@ def Sms_extraciton(test_sms):
                             'month_average_receive': total_receive / total_sms_month,
                             'day_average_receive': total_receive / total_sms_day},
                            index=[i])
-        train_sms3 = train_sms3.append(new, ignore_index=True)
-    return train_sms3
+        test_sms3 = test_sms3.append(new, ignore_index=True)
+    return test_sms3
 
 
 #%%get test
@@ -144,4 +144,3 @@ new_test = pd.merge(new_test, new_test_sms, how='left', on=['phone_no_m'])
 #%%save
 print('save data')
 new_test.to_csv('new_test.csv')
-
