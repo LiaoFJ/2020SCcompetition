@@ -76,13 +76,16 @@ def App_extraciton(train_app):
 
 def User_extraction(train_user, col):
     # 构建消费统计特征
+    colsum = ['arpu_201908', 'arpu_201909', 'arpu_201910', 'arpu_201911', 'arpu_201912', 'arpu_202001', 'arpu_202002',
+           'arpu_202003']
+    train_user[col] = train_user[colsum].mean(1)
     dict_city = dict(train_user.groupby(['city_name']).mean()[col])
     dict_county = dict(train_user.groupby(['county_name']).mean()[col])
     train_user['city_name_mean_arup'] = train_user['city_name'].map(dict_city)
     train_user['county_name_mean_arup'] = train_user['county_name'].map(dict_county)
+    # 判断是否有月消费记录是否为空
+    train_user['arup_null'] = train_user[colsum].isnull().any(axis=1)
     train_user[col] = train_user[col].fillna(0)
-    # 判断当月消费记录是否为空
-    train_user['arup_null'] = train_user[col].apply(lambda x: 1 if x == 0 else 0)
     # 是否属于高消费人群
     train_user['arup_high'] = train_user[col].apply(lambda x: 1 if x >= 150 else 0)
     # 转为one-hot编码
@@ -91,10 +94,7 @@ def User_extraction(train_user, col):
         lbl = LabelEncoder()
         train_user[i] = lbl.fit_transform(train_user[i].astype(str))
     #计算月均消费以及有没有nan
-    col = ['arpu_201908', 'arpu_201909', 'arpu_201910', 'arpu_201911', 'arpu_201912', 'arpu_202001', 'arpu_202002',
-           'arpu_202003']
-    train_user['arpu_202003'] = train_user[col].mean(1)
-    train_user['isnan'] = train_user[col].isnull().any(axis=1)
+
     return train_user
 
 
