@@ -107,27 +107,27 @@ def Sms_extraciton(train_sms):
         # 两种短信方式的次数统计
         total_receive = len(type1)
         total_send = len(type2)
-        # 接收/发送
+        # 接收/发送 率
         if (total_receive != 0) & (total_send != 0):
             ratio = total_receive / total_send
         else:
             ratio = -1
 
-        # 有效发送短信总月数
+        # 有效短信总月数
         total_sms_month = len(value['request_datetime'].apply(lambda x: x[:len('2020-03')]).unique())
-        # 有效发送短信总天数
+        # 有效短信总天数
         total_sms_day = len(value['request_datetime'].apply(lambda x: x.split(' ')[0]).unique())
 
         new = pd.DataFrame({'phone_no_m': phone_no_m,
-                            'total_receive': total_receive,
-                            'total_send': total_send,
-                            'ratio(send/receive)': ratio,
-                            'total_sms_month': total_sms_month,
-                            'total_sms_day': total_sms_day,
-                            'month_average_send': total_send / total_sms_month,
-                            'day_average_send': total_send / total_sms_day,
-                            'month_average_receive': total_receive / total_sms_month,
-                            'day_average_receive': total_receive / total_sms_day},
+                            'total_receive': total_receive, # 接收短信数
+                            'total_send': total_send, # 发送短信数
+                            'ratio(send/receive)': ratio, #（接收/发送）率
+                            'total_sms_month': total_sms_month, # 有效短信总月数
+                            'total_sms_day': total_sms_day,# 有效短信总天数
+                            'month_average_send': total_send / total_sms_month, # 平均月发送量
+                            'day_average_send': total_send / total_sms_day,# 平均天发送量
+                            'month_average_receive': total_receive / total_sms_month, # 平均月接收量
+                            'day_average_receive': total_receive / total_sms_day},# 平均日接收量
                            index=[i])
         train_sms3 = train_sms3.append(new, ignore_index=True)
     return train_sms3
