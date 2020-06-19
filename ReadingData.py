@@ -90,7 +90,11 @@ def User_extraction(train_user, col):
     for i in tqdm(cat_col):
         lbl = LabelEncoder()
         train_user[i] = lbl.fit_transform(train_user[i].astype(str))
-
+    #计算月均消费以及有没有nan
+    col = ['arpu_201908', 'arpu_201909', 'arpu_201910', 'arpu_201911', 'arpu_201912', 'arpu_202001', 'arpu_202002',
+           'arpu_202003']
+    train_user['arpu_202003'] = train_user[col].mean(1)
+    train_user['isnan'] = train_user[col].isnull().any(axis=1)
     return train_user
 
 
