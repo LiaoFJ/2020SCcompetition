@@ -10,6 +10,10 @@ path = os.path.abspath('.')
 
 # %%
 def Reading_train_data(path):
+    # train_app = pd.read_csv(os.path.join(path, 'train', 'train_app.csv'), sep=',', engine='python', nrows=10000)
+    # train_sms = pd.read_csv(os.path.join(path, 'train', 'train_sms.csv'), sep=',', engine='python', nrows=10000)
+    # train_voc = pd.read_csv(os.path.join(path, 'train', 'train_voc.csv'), sep=',', engine='python', nrows=10000)
+    # train_user = pd.read_csv(os.path.join(path, 'train', 'train_user.csv'), sep=',', engine='python', nrows=1000)
     train_app = pd.read_csv(os.path.join(path, 'train', 'train_app.csv'), sep=',', engine='python')
     train_sms = pd.read_csv(os.path.join(path, 'train', 'train_sms.csv'), sep=',', engine='python')
     train_voc = pd.read_csv(os.path.join(path, 'train', 'train_voc.csv'), sep=',', engine='python')
@@ -41,7 +45,10 @@ def Voc_extraction(train_voc):
         n_1 = x.loc[x.calltype_id == 1]
         n_2 = x.loc[x.calltype_id == 2]
         n_3 = x.loc[x.calltype_id == 3]
-        temp.append((e + n_1['label_call_dur'].sum()) / (e + n_2['label_call_dur'].sum() + n_3['label_call_dur'].sum()))
+        if n_1['label_call_dur'].sum() and (n_2['label_call_dur'].sum() + n_3['label_call_dur'].sum()) !=0:
+            temp.append((n_1['label_call_dur'].sum()) / (n_2['label_call_dur'].sum() + n_3['label_call_dur'].sum()))
+        else:
+            temp.append(-1)
         # 嫌疑电话数量
         temp2.append(x.label_call_dur.sum())
         # for imei_m
@@ -54,7 +61,7 @@ def Voc_extraction(train_voc):
     new_train_voc['avg_call_dur'] = new_train_voc['phone_no_m'].map(dict_avg)
     new_train_voc['num_of_call_sus_high'] = new_train_voc['num_of_sus'].apply(lambda x: 1 if x >= 357 else 0)
     return new_train_voc
-
+    #还可以细化，平均每日电话数量
 
 # %%
 def App_extraciton(train_app):
@@ -65,14 +72,19 @@ def App_extraciton(train_app):
 
     # new dataframe
     new_train_app = pd.DataFrame(dict_train_app)
-    temp_app, temp_app_name = [], []
+    temp_app, temp_app_name, temp_num = [], [], []
     # 后期可以把每个月的特征都拆接下来
     for name in new_train_app.phone_no_m:
         x = train_app.loc[train_app['phone_no_m'] == name]
         temp_app.append(x['flow'].sum())
+        temp_num.append(x['month_id'].nunique())
     new_train_app['flow'] = temp_app
+    new_train_app['num_month'] = temp_num
+    #app数量
+    num_of_app = dict(train_app.groupby(['phone_no_m']).nunique()['busi_name'])
+    new_train_app['num_of_app'] = new_train_app['phone_no_m'].map(num_of_app)
+    #平均每月
     return new_train_app
-
 
 def User_extraction(train_user, col):
     # 构建消费统计特征
