@@ -29,26 +29,25 @@ def Voc_extraction(train_voc):
     # new dataframe
     # 需不需要normalized
     new_train_voc = pd.DataFrame(dict_train_voc)
-    e = 10
-
+    e = 5
     # imei码
     def get_imei_m(x):
         temp = x['imei_m'].value_counts()
         if len(temp) == 1:
             return 0
         return 1
-
-    temp, temp2, temp3 = [], [], []
+    temp, temp2, temp3, temp_num_pr = [], [], [], []
     # 呼入呼出率
+    temp_re = []
     for name in new_train_voc.phone_no_m:
         x = train_voc.loc[train_voc['phone_no_m'] == name]
         n_1 = x.loc[x.calltype_id == 1]
         n_2 = x.loc[x.calltype_id == 2]
         n_3 = x.loc[x.calltype_id == 3]
-        if n_1['label_call_dur'].sum() and (n_2['label_call_dur'].sum() + n_3['label_call_dur'].sum()) !=0:
-            temp.append((n_1['label_call_dur'].sum()) / (n_2['label_call_dur'].sum() + n_3['label_call_dur'].sum()))
-        else:
-            temp.append(-1)
+        temp.append((n_1['label_call_dur'].sum() + e ) / (e + n_2['label_call_dur'].sum() + n_3['label_call_dur'].sum()))
+        temp_num_pr.append(x['opposite_no_m'].nunique())
+        #正常呼入呼出比
+        temp_re.append((e + n_1.shape[0]) / (e + n_2.shape[0] + n_3.shape[0]))
         # 嫌疑电话数量
         temp2.append(x.label_call_dur.sum())
         # for imei_m
@@ -56,6 +55,8 @@ def Voc_extraction(train_voc):
     new_train_voc['num_of_sus'] = temp2
     new_train_voc['num_of_sus_prob'] = temp
     new_train_voc['isimei'] = temp3
+    new_train_voc['num_of_pr'] = temp_num_pr
+    new_train_voc['num_of_prob'] = temp_re
     col = 'call_dur'
     dict_avg = dict(train_voc.groupby(['phone_no_m']).mean()[col])
     new_train_voc['avg_call_dur'] = new_train_voc['phone_no_m'].map(dict_avg)
@@ -79,11 +80,12 @@ def App_extraciton(train_app):
         temp_app.append(x['flow'].sum())
         temp_num.append(x['month_id'].nunique())
     new_train_app['flow'] = temp_app
+    #平均每月
     new_train_app['num_month'] = temp_num
     #app数量
     num_of_app = dict(train_app.groupby(['phone_no_m']).nunique()['busi_name'])
     new_train_app['num_of_app'] = new_train_app['phone_no_m'].map(num_of_app)
-    #平均每月
+
     return new_train_app
 
 def User_extraction(train_user, col):
@@ -97,7 +99,9 @@ def User_extraction(train_user, col):
     train_user['county_name_mean_arup'] = train_user['county_name'].map(dict_county)
     # 判断是否有月消费记录是否为空
     train_user['arup_null'] = train_user[colsum].isnull().any(axis=1)
-    train_user[col] = train_user[col].fillna(0)
+    #这个不确定到底有没有用
+    # train_user[col] = train_user[col].fillna(0)
+
     # 是否属于高消费人群
     train_user['arup_high'] = train_user[col].apply(lambda x: 1 if x >= 150 else 0)
     # 转为one-hot编码

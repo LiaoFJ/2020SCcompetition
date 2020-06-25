@@ -20,28 +20,35 @@ def Voc_extraction(test_voc):
     # new dataframe
     # 需不需要normalized
     new_test_voc = pd.DataFrame(dict_test_voc)
-    e = 10
+    e = 5
     #imei码
     def get_imei_m(x):
         temp = x['imei_m'].value_counts()
         if len(temp) == 1:
             return 0
         return 1
-    temp, temp2, temp3 = [], [], []
+    temp, temp2, temp3, temp_num_pr = [], [], [], []
     #呼入呼出率
+    temp_re = []
     for name in new_test_voc.phone_no_m:
         x = test_voc.loc[test_voc['phone_no_m'] == name]
         n_1 = x.loc[x.calltype_id == 1]
         n_2 = x.loc[x.calltype_id == 2]
         n_3 = x.loc[x.calltype_id == 3]
-        temp.append((e + n_1['label_call_dur'].sum())/(e + n_2['label_call_dur'].sum() + n_3['label_call_dur'].sum()))
+        temp.append((n_1['label_call_dur'].sum() + e ) / (e + n_2['label_call_dur'].sum() + n_3['label_call_dur'].sum()))
+        temp_num_pr.append(x['opposite_no_m'].nunique())
+
     #嫌疑电话数量
         temp2.append(x.label_call_dur.sum())
+        #正常呼入呼出比
+        temp_re.append((e + n_1.shape[0]) / (e + n_2.shape[0] + n_3.shape[0]))
     #for imei_m
         temp3.append(get_imei_m(x))
     new_test_voc['num_of_sus'] = temp2
     new_test_voc['num_of_sus_prob'] = temp
     new_test_voc['isimei'] = temp3
+    test_user['num_of_pr'] = temp_num_pr
+    new_test_voc['num_of_prob'] = temp_re
     col = 'call_dur'
     dict_avg = dict(test_voc.groupby(['phone_no_m']).mean()[col])
     new_test_voc['avg_call_dur'] = new_test_voc['phone_no_m'].map(dict_avg)
@@ -56,13 +63,23 @@ def App_extraciton(test_app):
 
     # new dataframe
     new_test_app = pd.DataFrame(dict_test_app)
-    temp_app, temp_app_name = [], []
+    temp_app, temp_app_name, temp_num = [], [], []
     # 后期可以把每个月的特征都拆接下来
     for name in new_test_app.phone_no_m:
         x = test_app.loc[test_app['phone_no_m'] == name]
         temp_app.append(x['flow'].sum())
+        temp_num.append(x['month_id'].nunique())
     new_test_app['flow'] = temp_app
+    #平均每月
+    new_test_app['num_month'] = temp_num
+    #app数量
+    num_of_app = dict(test_app.groupby(['phone_no_m']).nunique()['busi_name'])
+    new_test_app['num_of_app'] = new_test_app['phone_no_m'].map(num_of_app)
     return new_test_app
+
+
+
+
 
 def User_extraction(test_user, col):
     # 构建消费统计特征
