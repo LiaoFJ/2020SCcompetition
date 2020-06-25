@@ -52,7 +52,6 @@ def Voc_extraction(test_voc):
     col = 'call_dur'
     dict_avg = dict(test_voc.groupby(['phone_no_m']).mean()[col])
     new_test_voc['avg_call_dur'] = new_test_voc['phone_no_m'].map(dict_avg)
-    new_test_voc['num_of_call_high'] = new_test_voc['num_of_call'].apply(lambda x: 1 if x >= 50 else 0)
     return new_test_voc
 #%%
 def App_extraciton(test_app):
@@ -87,7 +86,7 @@ def User_extraction(test_user, col):
     dict_county = dict(test_user.groupby(['county_name']).mean()[col])
     test_user['city_name_mean_arup'] = test_user['city_name'].map(dict_city)
     test_user['county_name_mean_arup'] = test_user['county_name'].map(dict_county)
-    test_user[col] = test_user[col].fillna(0)
+    # test_user[col] = test_user[col].fillna(0)
     # 判断当月消费记录是否为空
     test_user['arup_null'] = test_user[col].apply(lambda x: 1 if x == 0 else 0)
     # 是否属于高消费人群

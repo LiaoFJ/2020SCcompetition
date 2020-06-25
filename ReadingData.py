@@ -37,7 +37,7 @@ def Voc_extraction(train_voc):
             return 0
         return 1
     temp, temp2, temp3, temp_num_pr = [], [], [], []
-    # 呼入呼出率
+
     temp_re = []
     for name in new_train_voc.phone_no_m:
         x = train_voc.loc[train_voc['phone_no_m'] == name]
@@ -46,21 +46,24 @@ def Voc_extraction(train_voc):
         n_3 = x.loc[x.calltype_id == 3]
         temp.append((n_1['label_call_dur'].sum() + e ) / (e + n_2['label_call_dur'].sum() + n_3['label_call_dur'].sum()))
         temp_num_pr.append(x['opposite_no_m'].nunique())
-        #正常呼入呼出比
         temp_re.append((e + n_1.shape[0]) / (e + n_2.shape[0] + n_3.shape[0]))
-        # 嫌疑电话数量
         temp2.append(x.label_call_dur.sum())
         # for imei_m
         temp3.append(get_imei_m(x))
+    #嫌疑电话得数量
     new_train_voc['num_of_sus'] = temp2
+    #嫌疑电话得呼入呼出率
     new_train_voc['num_of_sus_prob'] = temp
+    #电话真伪对照表
     new_train_voc['isimei'] = temp3
+    #通话得人数
     new_train_voc['num_of_pr'] = temp_num_pr
+    #总通话得呼入呼出比率
     new_train_voc['num_of_prob'] = temp_re
     col = 'call_dur'
     dict_avg = dict(train_voc.groupby(['phone_no_m']).mean()[col])
+    #平均通话时长
     new_train_voc['avg_call_dur'] = new_train_voc['phone_no_m'].map(dict_avg)
-    new_train_voc['num_of_call_sus_high'] = new_train_voc['num_of_sus'].apply(lambda x: 1 if x >= 357 else 0)
     return new_train_voc
     #还可以细化，平均每日电话数量
 
