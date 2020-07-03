@@ -3,8 +3,10 @@ import os
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
-path = os.path.abspath('.')
-#path = '/Users/mayspig/Desktop/竞赛/诈骗电话竞赛资料/诈骗电话号码识别-0527'
+import time
+
+#upath = os.path.abspath('.')
+path = '/Users/mayspig/Desktop/竞赛/诈骗电话竞赛资料/诈骗电话号码识别-0527'
 #%%
 def Reading_test_data(path):
     test_app = pd.read_csv(os.path.join(path, 'test', 'test_app.csv'), sep=',', engine='python')
@@ -79,7 +81,7 @@ def App_extraciton(test_app):
 
 
 
-
+#%%
 def User_extraction(test_user, col):
     # 构建消费统计特征
     dict_city = dict(test_user.groupby(['city_name']).mean()[col])
@@ -99,13 +101,15 @@ def User_extraction(test_user, col):
 
     return test_user
 
-
+#%%
 def Sms_extraciton(test_sms):
     test_sms2 = test_sms.groupby('phone_no_m')
 
     test_sms3 = pd.DataFrame(
         columns=['phone_no_m', 'total_receive', 'total_send', 'ratio(send/receive)', 'total_sms_month', 'total_sms_day',
-                 'month_average_send', 'day_average_send', 'month_average_receive', 'day_average_receive'])
+                 'month_average_send', 'day_average_send', 'month_average_receive', 'day_average_receive',
+                 'send_person_num',
+                 'ave_send_interval', 'min_send_interval'])
     i = 0
     for phone_no_m, value in test_sms2:
         type1 = value[value['calltype_id'] == 1]
@@ -113,31 +117,54 @@ def Sms_extraciton(test_sms):
         # 两种短信方式的次数统计
         total_receive = len(type1)
         total_send = len(type2)
-        # 接收/发送
-        if (total_receive != 0) & (total_send != 0):
-            ratio = total_receive / total_send
-        else:
-            ratio = -1
+        # # 接收/发送 率
+        # if (total_receive != 0) & (total_send != 0):
+        #     ratio = total_receive / total_send
+        # else:
+        #     ratio = -1
 
-        # 有效发送短信总月数
+        # 接收/发送 率
+        e = 5
+        ratio = (total_receive + e) / (total_send + e)
+
+        # 短信发送人数
+        send_person_num = value['opposite_no_m'].nunique()
+
+        # 有效短信总月数
         total_sms_month = len(value['request_datetime'].apply(lambda x: x[:len('2020-03')]).unique())
-        # 有效发送短信总天数
+        # 有效短信总天数
         total_sms_day = len(value['request_datetime'].apply(lambda x: x.split(' ')[0]).unique())
 
+        # 短信时间
+        value = value.sort_values(by=['request_datetime'], ascending=True)
+        datetime = value['request_datetime']
+        list = []
+        for i in datetime:
+            dt = time.strptime(i, "%Y-%m-%d %H:%M:%S")
+            dt_new = time.mktime(dt)
+            list.append(dt_new)
+        if (len(list) > 1):
+            ave_send_interval = sum(map(lambda x: x[1] - x[0], zip(list[:-2], list[1:]))) / (len(list) - 1)
+        else:
+            ave_send_interval = -1
+        min_send_interval = min(map(lambda x: x[1] - x[0], zip(list[:-2], list[1:])), default=-1)
+
         new = pd.DataFrame({'phone_no_m': phone_no_m,
-                            'total_receive': total_receive,
-                            'total_send': total_send,
-                            'ratio(send/receive)': ratio,
-                            'total_sms_month': total_sms_month,
-                            'total_sms_day': total_sms_day,
-                            'month_average_send': total_send / total_sms_month,
-                            'day_average_send': total_send / total_sms_day,
-                            'month_average_receive': total_receive / total_sms_month,
-                            'day_average_receive': total_receive / total_sms_day},
+                            'total_receive': total_receive,  # 接收短信数
+                            'total_send': total_send,  # 发送短信数
+                            'ratio(send/receive)': ratio,  # （接收/发送）率
+                            'total_sms_month': total_sms_month,  # 有效短信总月数
+                            'total_sms_day': total_sms_day,  # 有效短信总天数
+                            'month_average_send': total_send / total_sms_month,  # 平均月发送量
+                            'day_average_send': total_send / total_sms_day,  # 平均天发送量
+                            'month_average_receive': total_receive / total_sms_month,  # 平均月接收量
+                            'day_average_receive': total_receive / total_sms_day,  # 平均日接收量
+                            'send_person_num': send_person_num,  # 短信发送人数
+                            'ave_send_interval': ave_send_interval,  # 平均发送间隔
+                            'min_send_interval': min_send_interval},  # 最短发送间隔
                            index=[i])
         test_sms3 = test_sms3.append(new, ignore_index=True)
     return test_sms3
-
 
 #%%get test
 col = 'arpu_202004'
