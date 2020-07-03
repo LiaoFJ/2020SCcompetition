@@ -49,7 +49,7 @@ def Voc_extraction(test_voc):
     new_test_voc['num_of_sus'] = temp2
     new_test_voc['num_of_sus_prob'] = temp
     new_test_voc['isimei'] = temp3
-    test_user['num_of_pr'] = temp_num_pr
+    new_test_voc['num_of_pr'] = temp_num_pr
     new_test_voc['num_of_prob'] = temp_re
     col = 'call_dur'
     dict_avg = dict(test_voc.groupby(['phone_no_m']).mean()[col])
