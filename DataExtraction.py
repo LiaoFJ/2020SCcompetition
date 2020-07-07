@@ -226,8 +226,8 @@ spe_col = ['city_name', 'county_name']
 for i in tqdm(spe_col):
     one_list = train_user[i].drop_duplicates().values.tolist()
     dict_cat = dict()
-    for i, item in enumerate(one_list):
-        dict_cat[i] = item
+    for key, value in enumerate(one_list):
+        dict_cat[value] = key
     new_train[i] = new_train[i].map(dict_cat)
     new_test[i] = new_test[i].map(dict_cat)
 # %%save
