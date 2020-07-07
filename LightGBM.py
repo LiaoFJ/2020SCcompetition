@@ -11,6 +11,8 @@ train = pd.read_csv(os.path.join(path, 'train_data.csv'), sep=',', engine='pytho
 target = pd.read_csv(os.path.join(path, 'target.csv'), sep=',', engine='python', index_col=0, header = None)
 test = pd.read_csv(os.path.join(path, 'test_data.csv'), sep=',', engine='python', index_col=0)
 #%%
+target_smote = pd.read_csv(os.path.join(path, 'train_data_smote.csv'), sep=',', engine='python', index_col=0, header = None)
+#%%
 minmaxCat = ['city_name', 'county_name','city_name_mean_arup', 'county_name_mean_arup', 'idcard_cnt']
 ZCat = ['arpu_202003', 'num_of_call', 'num_of_sus', 'num_of_sus_prob', 'avg_call_dur', 'flow']
 
@@ -30,27 +32,27 @@ ZCattest = ['arpu_202004', 'num_of_call', 'num_of_sus', 'num_of_sus_prob', 'avg_
 
 #%%
 
-params = {'num_leaves': 75, #结果对最终效果影响较大，越大值越好，太大会出现过拟合
-          'min_data_in_leaf': 25,
+params = {'num_leaves': 70, #结果对最终效果影响较大，越大值越好，太大会出现过拟合
+          'min_data_in_leaf': 27,
           'max_depth': -1,
           'objective': 'binary', #定义的目标函数
-          'learning_rate': 0.03,
+          'learning_rate': 0.02,
           "min_sum_hessian_in_leaf": 6,
           "boosting": "gbdt",
           "feature_fraction": 0.9,  #提取的特征比率
           "bagging_freq": 1,
           "bagging_fraction": 0.8,
           "bagging_seed": 11,
-          "lambda_l1": 0.1,             #l1正则
+          "lambda_l1": 0.15,             #l1正则
           # 'lambda_l2': 0.001,     #l2正则
           "verbosity": -1,
           "nthread": -1,                #线程数量，-1表示全部线程，线程越多，运行的速度越快
           'metric': {'binary_logloss', 'auc'},  ##评价函数选择
-          "random_state": 2019, #随机数种子，可以防止每次运行的结果不一致
+
           # 'device': 'gpu' ##如果安装的事gpu版本的lightgbm,可以加快运算
           }
 
-folds = KFold(n_splits=10, shuffle=True, random_state=2019)
+folds = KFold(n_splits=10, shuffle=True)
 
 prob_oof = np.zeros((train.shape[0], ))
 
