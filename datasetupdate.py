@@ -2,7 +2,7 @@
 import os
 import pandas as pd
 path = os.path.abspath('.')
-
+# path = '/Users/mayspig/Documents/GitHub/2020SCcompetition'
 #%%
 new_train = pd.read_csv(os.path.join(path, 'new_train.csv'), sep=',', engine='python')
 new_test = pd.read_csv(os.path.join(path, 'new_test.csv'), sep=',', engine='python')
@@ -21,7 +21,7 @@ def fillnan(x):
     return x
 def smote_train(train_data):
     cat_col = [i for i in train_data.columns if i is not 'label']
-    data_x = train_data.iloc[cat_col]
+    data_x = train_data.loc[:, cat_col]
     data_y = train_data.loc[:, 'label']
     sm = SMOTE(random_state=42)
     data_x, data_y = sm.fit_sample(data_x, data_y)
