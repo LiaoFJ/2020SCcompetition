@@ -2,7 +2,7 @@
 import os
 import pandas as pd
 path = os.path.abspath('.')
-
+# path = '/Users/mayspig/Documents/GitHub/2020SCcompetition'
 #%%
 new_train = pd.read_csv(os.path.join(path, 'new_train.csv'), sep=',', engine='python')
 new_test = pd.read_csv(os.path.join(path, 'new_test.csv'), sep=',', engine='python')
@@ -20,24 +20,29 @@ def fillnan(x):
     x = x.fillna(0)
     return x
 def smote_train(train_data):
-    cat_col = [i for i in train_data.columns if i is not 'label']
-    data_x = train_data.iloc[cat_col]
+    cat_col = train_data.columns[train_data.columns !='label']
+    # cat_col = [i for i in train_data.columns if i is not 'label']
+    data_x = train_data.loc[:, cat_col]
     data_y = train_data.loc[:, 'label']
     sm = SMOTE(random_state=42)
     data_x, data_y = sm.fit_sample(data_x, data_y)
     # n_sample = data_x.shape[0]
     # n_0_sample = data_y.value_counts()[0]
     # n_1_sample = data_y.value_counts()[1]
-    train_data = pd.concat([data_x, data_y], axis=1)
-    return train_data
+    # train_data = pd.concat([data_x, data_y], axis=1)
+    return data_x, data_y
 #%%
 train_data = fillnan(new_train)
-train_data = smote_train(train_data)
-test_data = fillnan(new_test)
-target = new_train['label']
+train, target = smote_train(train_data)
+test = fillnan(new_test)
+
+print(train.shape)
+print(target.shape)
+print(test.shape)
+
 #%%
-train_data.to_csv('train_data.csv')
-test_data.to_csv('test_data.csv')
+train.to_csv('train_data.csv')
+test.to_csv('test_data.csv')
 target.to_csv('target.csv')
 
 #问题

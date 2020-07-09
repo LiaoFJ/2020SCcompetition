@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import numpy as np
 path = os.path.abspath('.')
+# path = '/Users/mayspig/Documents/GitHub/2020SCcompetition'
 import lightgbm as lgb
 from sklearn.model_selection import KFold, train_test_split
 from sklearn.metrics import log_loss
