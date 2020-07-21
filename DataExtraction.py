@@ -43,7 +43,7 @@ def Voc_extraction(train_voc):
             return 0
         return 1
     temp, temp2, temp3, temp_num_pr = [], [], [], []
-
+    temp_calling_month = []
     temp_re = []
     for name in new_train_voc.phone_no_m:
         x = train_voc.loc[train_voc['phone_no_m'] == name]
@@ -54,25 +54,36 @@ def Voc_extraction(train_voc):
         temp_num_pr.append(x['opposite_no_m'].nunique())
         temp_re.append((e + n_1.shape[0]) / (e + n_2.shape[0] + n_3.shape[0]))
         temp2.append(x.label_call_dur.sum())
+        temp_calling_month.append(x['start_datetime'].apply(lambda x: x[:len('2020-03')]).nunique())
         # for imei_m
         temp3.append(get_imei_m(x))
-    #嫌疑电话得数量
+    #嫌疑电话得数量/有通话的月份
     new_train_voc['num_of_sus'] = temp2
     #嫌疑电话得呼入呼出率
     new_train_voc['num_of_sus_prob'] = temp
     #电话真伪对照表
     new_train_voc['isimei'] = temp3
-    #通话得人数
-    new_train_voc['num_of_pr'] = temp_num_pr
+    #通话的人数
+    # new_train_voc['num_of_pr'] = temp_num_pr
     #总通话得呼入呼出比率
     new_train_voc['num_of_prob'] = temp_re
     col = 'call_dur'
     dict_avg = dict(train_voc.groupby(['phone_no_m']).mean()[col])
     #平均通话时长
     new_train_voc['avg_call_dur'] = new_train_voc['phone_no_m'].map(dict_avg)
+    #平均通话次数
+    #预置一个通话月份，后面删除
+    new_train_voc['calling_month'] = temp_calling_month
+    new_train_voc['num_of_call'] = new_train_voc.apply(lambda x: x['num_of_call'] / x['calling_month'], axis=1)
+    new_train_voc = new_train_voc.drop(['calling_month'], axis=1)
     return new_train_voc
     #还可以细化，平均每日电话数量
+
+
+    #修改：电话总数，嫌疑电话总数，这些地方需要修改
+    #具体修改： 电话总数/拨打电话的月份数， 嫌疑电话总数/拨打电话的月份数
 # %%
+import numpy as np
 def App_extraciton(train_app):
     # analyse train_app
     # app_counts = train_app['month_id'].value_counts()
@@ -85,11 +96,11 @@ def App_extraciton(train_app):
     # 后期可以把每个月的特征都拆接下来
     for name in new_train_app.phone_no_m:
         x = train_app.loc[train_app['phone_no_m'] == name]
-        temp_app.append(x['flow'].sum())
         temp_num.append(x['month_id'].nunique())
-    new_train_app['flow'] = temp_app
-    #平均每月
-    new_train_app['num_month'] = temp_num
+        temp_app.append(x['flow'].sum())
+        temp_flow = np.array(temp_num) / np.array(temp_app)
+    #平均每月流量
+    new_train_app['flow'] = temp_flow.tolist()
     #app数量
     num_of_app = dict(train_app.groupby(['phone_no_m']).nunique()['busi_name'])
     new_train_app['num_of_app'] = new_train_app['phone_no_m'].map(num_of_app)
@@ -99,13 +110,16 @@ def App_extraciton(train_app):
 def User_extraction(train_user, col, if_train=True):
     # 构建消费统计特征
     if if_train == True:
-        colsum = ['arpu_201908', 'arpu_201909', 'arpu_201910', 'arpu_201911', 'arpu_201912', 'arpu_202001', 'arpu_202002',
-           'arpu_202003']
-        train_user[col] = train_user[colsum].mean(1)
-        # 判断是否有月消费记录是否为空
-        train_user['arup_null'] = train_user[colsum].isnull().any(axis=1)
+        # colsum = ['arpu_201908', 'arpu_201909', 'arpu_201910', 'arpu_201911', 'arpu_201912', 'arpu_202001', 'arpu_202002',
+        #    'arpu_202003']
+        # train_user[col] = train_user[colsum].mean(1)
+        # # 判断是否有月消费记录是否为空
+        # train_user['arup_null'] = train_user[colsum].isnull().any(axis=1)
+
+        train_user['arup_null'] = train_user[col].isnull()
     else:
-        test_user['arup_null'] = test_user[col].isnull()
+        train_user['arup_null'] = train_user[col].isnull()
+    # city和county的均值映射在最后
     dict_city = dict(train_user.groupby(['city_name']).mean()[col])
     dict_county = dict(train_user.groupby(['county_name']).mean()[col])
     train_user['city_name_mean_arup'] = train_user['city_name'].map(dict_city)
@@ -117,15 +131,15 @@ def User_extraction(train_user, col, if_train=True):
     train_user['arup_high'] = train_user[col].apply(lambda x: 1 if x >= 150 else 0)
 
     return train_user
+
 # %%
 def Sms_extraciton(train_sms):
     train_sms2 = train_sms.groupby('phone_no_m')
 
     train_sms3 = pd.DataFrame(
-        columns=['phone_no_m', 'total_receive', 'total_send', 'ratio(send/receive)', 'total_sms_month', 'total_sms_day',
+        columns=['phone_no_m', 'ratio(send/receive)',
                  'month_average_send', 'day_average_send', 'month_average_receive', 'day_average_receive',
-                 'send_person_num',
-                 'ave_send_interval', 'min_send_interval'])
+                 'ave_send_interval'])
     i = 0
     for phone_no_m, value in train_sms2:
         type1 = value[value['calltype_id'] == 1]
@@ -166,16 +180,16 @@ def Sms_extraciton(train_sms):
 
 
         new = pd.DataFrame({'phone_no_m': phone_no_m,
-                            'total_receive': total_receive,  # 接收短信数
-                            'total_send': total_send,  # 发送短信数
+                            # 'total_receive': total_receive,  # 接收短信数
+                            # 'total_send': total_send,  # 发送短信数
                             'ratio(send/receive)': ratio,  # （接收/发送）率
-                            'total_sms_month': total_sms_month,  # 有效短信总月数
-                            'total_sms_day': total_sms_day,  # 有效短信总天数
+                            # 'total_sms_month': total_sms_month,  # 有效短信总月数
+                            # 'total_sms_day': total_sms_day,  # 有效短信总天数
                             'month_average_send': total_send / total_sms_month,  # 平均月发送量
                             'day_average_send': total_send / total_sms_day,  # 平均天发送量
                             'month_average_receive': total_receive / total_sms_month,  # 平均月接收量
                             'day_average_receive': total_receive / total_sms_day,  # 平均日接收量
-                            'send_person_num': send_person_num,  # 短信发送人数
+                            # 'send_person_num': send_person_num,  # 短信发送人数
                             'ave_send_interval': ave_send_interval,  # 平均发送间隔
                                 },
                            index=[i])
@@ -230,9 +244,20 @@ for i in tqdm(spe_col):
         dict_cat[value] = key
     new_train[i] = new_train[i].map(dict_cat)
     new_test[i] = new_test[i].map(dict_cat)
+
+
+print('for map')
+dict_city = dict()
+for key, value in zip(new_train['city_name'], new_train['city_name_mean_arup']):
+    dict_city[key] = value
+new_test['city_name_mean_arup'] = new_test['city_name'].map(dict_city)
+for key, value in zip(new_train['county_name'], new_train['county_name_mean_arup']):
+    dict_city[key] = value
+new_test['county_name_mean_arup'] = new_test['county_name'].map(dict_city)
+
 # %%save
 print('save train')
-new_train.to_csv('new_train.csv')
+new_train.to_csv('./data/new_train.csv')
 
 print('save test')
-new_test.to_csv('new_test.csv')
+new_test.to_csv('./data/new_test.csv')
